@@ -1,6 +1,5 @@
 setuptools
 Flask
-ALE
 
 requests
 
