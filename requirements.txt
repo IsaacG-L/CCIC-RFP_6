@@ -1,0 +1,15 @@
+setuptools
+Flask
+
+requests
+
+pandas
+
+numpy
+
+matplotlib
+
+gymnasium
+pygame
+
+scikit-learn
