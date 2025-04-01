@@ -13,6 +13,3 @@ gymnasium
 pygame
 
 scikit-learn
-
-yellowbrick
-spotipy
