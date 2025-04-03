@@ -10,6 +10,9 @@ numpy
 matplotlib
 
 gymnasium
+stable-baselines3
 pygame
 
 scikit-learn
+
+opencv-python
