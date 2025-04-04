@@ -12,6 +12,7 @@ matplotlib
 gymnasium
 stable-baselines3
 pygame
+ale_py
 
 scikit-learn
 
