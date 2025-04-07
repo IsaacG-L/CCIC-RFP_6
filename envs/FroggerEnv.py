@@ -37,16 +37,16 @@ def worker(i, q_in : multiprocessing.Queue, q_out : multiprocessing.Queue, env :
             continue
 
 class CustomVecEnv(VecEnv):
-    def __init__(self, num_envs : int):
-        self.num_envs = num_envs
-        self.envs = [None] * num_envs
-        self.action_spaces = [None] * num_envs
+    def __init__(self):
+        self.num_envs = BFconfig.num_envs
+        self.envs = [None] * self.num_envs
+        self.action_spaces = [None] * self.num_envs
         self.processes = []
         self.queues = []
         self.closed = False
 
         manager = multiprocessing.Manager()
-        self.envs = manager.list([None] * num_envs)
+        self.envs = manager.list([None] * self.num_envs)
 
         for i in range(self.num_envs):
             env = gym.make(
@@ -158,6 +158,9 @@ class CustomVecEnv(VecEnv):
         results = [q_out.get() for _, q_out in self.queues]
         obs, rewards, dones, truncateds, infos = zip(*results)
         return np.array(obs), np.array(rewards), np.array(dones), np.array(truncateds), infos
+    
+    def get_num_envs(self):
+        return self.num_envs
     
     @property
     def action_space(self):
