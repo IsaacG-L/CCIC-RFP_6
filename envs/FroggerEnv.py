@@ -14,14 +14,14 @@ from envs.MultiActionSpace import ActionSpaces
 
 def worker(i, q_in : multiprocessing.Queue, q_out : multiprocessing.Queue, env : gym.Env):
     """Worker process that creates the environment and handles requests."""
-    print(f"Worker {i} process started.")  # Confirm worker is starting
+    print(f"Worker {i} process started.")
     while True:
         try:
-            command, data = q_in.get(timeout=1)  # Wait for a command
-            print(f"Worker {i} received command: {command}")  # Debug command received
+            command, data = q_in.get(timeout=1)
+            print(f"Worker {i} received command: {command}")
             if command == 'reset':
                 print(f"Worker {i} resetting environment...")
-                obs, info = env.reset()  # Reset the environment and get observation
+                obs, info = env.reset()
                 q_out.put((obs, info))
             elif command == 'step':
                 print(f"Worker {i} stepping environment...")
