@@ -3,10 +3,12 @@ from typing import Tuple
 
 
 class BuildFroggerConfig:
-    env_name: str = "ALE/Frogger-v5"
+    num_envs : int = 4
+    env_name : str = "ALE/Frogger-v5"
     render_mode : str = "rgb_array"
     max_episode_steps : int = None
     disable_env_checker : bool = None
+    full_action_space : bool = False
 
 class PreprocessingFroggerConfig:
     noop_max : int = 30

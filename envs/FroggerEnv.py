@@ -11,6 +11,8 @@ from queue import Empty
 import ale_py
 
 from envs.MultiActionSpace import ActionSpaces
+from configs.FroggerConfig import BuildFroggerConfig as BFconfig
+from configs.FroggerConfig import PreprocessingFroggerConfig as PFconfig
 
 def worker(i, q_in : multiprocessing.Queue, q_out : multiprocessing.Queue, env : gym.Env):
     """Worker process that creates the environment and handles requests."""
@@ -47,8 +49,24 @@ class CustomVecEnv(VecEnv):
         self.envs = manager.list([None] * num_envs)
 
         for i in range(self.num_envs):
-            env = gym.make("ALE/Frogger-v5", render_mode="rgb_array",)
-            env = AtariPreprocessing(env, frame_skip=1, grayscale_newaxis=True)
+            env = gym.make(
+                id = BFconfig.env_name, 
+                max_episode_steps = BFconfig.max_episode_steps,
+                disable_env_checker = BFconfig.disable_env_checker,
+                render_mode = BFconfig.render_mode,
+                full_action_space = BFconfig.full_action_space
+                )
+            env = AtariPreprocessing(
+                env = env,
+                noop_max = PFconfig.noop_max,
+                frame_skip = PFconfig.frame_skip,
+                screen_size = PFconfig.screen_size,
+                terminal_on_life_loss = PFconfig.terminal_on_life_loss,
+                grayscale_obs = PFconfig.grayscale_obs,
+                grayscale_newaxis = PFconfig.grayscale_newaxis,
+                scale_obs = PFconfig.scale_obs
+                )
+            
             self.action_spaces[i] = env.action_space
 
             q_in = multiprocessing.Queue()
@@ -90,7 +108,6 @@ class CustomVecEnv(VecEnv):
         for _, q_out in self.queues:
             result = q_out.get()
             results.append(result)
-            print(f"Step result from environment: {result}")  # Print step result from each environment
         obs, rewards, dones, truncateds, infos = zip(*results)
         return np.array(obs), np.array(rewards), np.array(dones), np.array(truncateds), infos
 
@@ -105,7 +122,7 @@ class CustomVecEnv(VecEnv):
 
     def env_is_wrapped(self, wrapper_class):
         """Return True if the environment is wrapped with a specific wrapper class."""
-        return False
+        return True
 
     def env_method(self, method_name, *args, **kwargs):
         """Call a method on all environments."""
