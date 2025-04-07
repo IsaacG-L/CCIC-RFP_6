@@ -12,42 +12,40 @@ import ale_py
 
 from envs.MultiActionSpace import ActionSpaces
 
-def worker(idx, q_in, q_out, env):
+def worker(i, q_in : multiprocessing.Queue, q_out : multiprocessing.Queue, env : gym.Env):
     """Worker process that creates the environment and handles requests."""
-    print(f"Worker {idx} process started.")  # Confirm worker is starting
+    print(f"Worker {i} process started.")  # Confirm worker is starting
     while True:
         try:
             command, data = q_in.get(timeout=1)  # Wait for a command
-            print(f"Worker {idx} received command: {command}")  # Debug command received
+            print(f"Worker {i} received command: {command}")  # Debug command received
             if command == 'reset':
-                print(f"Worker {idx} resetting environment...")
+                print(f"Worker {i} resetting environment...")
                 obs, info = env.reset()  # Reset the environment and get observation
                 q_out.put((obs, info))
             elif command == 'step':
-                print(f"Worker {idx} stepping environment...")
+                print(f"Worker {i} stepping environment...")
                 obs, reward, done, truncated, info = env.step(data)
                 q_out.put((obs, reward, done, truncated, info))
             elif command == 'close':
-                print(f"Worker {idx} closing environment...")
+                print(f"Worker {i} closing environment...")
                 env.close()
                 break
         except Empty:
             continue
 
 class CustomVecEnv(VecEnv):
-    def __init__(self, num_envs):
+    def __init__(self, num_envs : int):
         self.num_envs = num_envs
-        self.envs = [None] * num_envs  # Initialize list of environments
+        self.envs = [None] * num_envs
         self.action_spaces = [None] * num_envs
         self.processes = []
         self.queues = []
         self.closed = False
 
-        # Use multiprocessing.Manager to manage shared state for environments
         manager = multiprocessing.Manager()
-        self.envs = manager.list([None] * num_envs)  # Shared list to hold environments
+        self.envs = manager.list([None] * num_envs)
 
-        # Create the environment processes
         for i in range(self.num_envs):
             env = gym.make("ALE/Frogger-v5", render_mode="rgb_array",)
             env = AtariPreprocessing(env, frame_skip=1, grayscale_newaxis=True)
@@ -56,9 +54,8 @@ class CustomVecEnv(VecEnv):
             q_in = multiprocessing.Queue()
             q_out = multiprocessing.Queue()
             self.queues.append((q_in, q_out))
-            # Create a separate process for each environment worker
-            p = multiprocessing.Process(target=worker, args=(i, q_in, q_out, env))  # Pass index of env and shared envs list
-            print(f"Main process starting worker {i}")  # Debug message
+            p = multiprocessing.Process(target=worker, args=(i, q_in, q_out, env))
+            print(f"Main process starting worker {i}")
             p.start()
             self.processes.append(p)
             self.envs[i] = env
@@ -69,13 +66,13 @@ class CustomVecEnv(VecEnv):
         """Reset all environments and return observations."""
         print("Main process sending reset command...", flush=True)
         for q_in, _ in self.queues:
-            q_in.put(('reset', None))  # Send reset command to each worker
+            q_in.put(('reset', None))
 
         observations = []
         for _, q_out in self.queues:
             try:
                 print("Main process waiting for response...", flush=True)
-                obs, info = q_out.get(timeout=5)  # Wait for response with timeout to avoid hanging
+                obs, info = q_out.get(timeout=5)
                 print(f"Main process received observation with shape: {obs.shape}", flush=True)
                 observations.append(obs)
             except Empty:
@@ -89,7 +86,6 @@ class CustomVecEnv(VecEnv):
             q_in.put(('step', actions[i]))
             print(f"action {actions[i]} performed on index {i}")
 
-        # Collect the results from all environments
         results = []
         for _, q_out in self.queues:
             result = q_out.get()
@@ -107,17 +103,15 @@ class CustomVecEnv(VecEnv):
                 p.join()
             self.closed = True
 
-    # These methods are required by VecEnv
     def env_is_wrapped(self, wrapper_class):
         """Return True if the environment is wrapped with a specific wrapper class."""
-        return False  # Change this if you are using wrappers
+        return False
 
     def env_method(self, method_name, *args, **kwargs):
         """Call a method on all environments."""
         for q_in, _ in self.queues:
             q_in.put(('method', method_name, args, kwargs))
 
-        # Collect results
         results = [q_out.get() for _, q_out in self.queues]
         return results
 
@@ -126,7 +120,6 @@ class CustomVecEnv(VecEnv):
         for q_in, _ in self.queues:
             q_in.put(('get_attr', attr_name, index))
 
-        # Collect results
         results = [q_out.get() for _, q_out in self.queues]
         return results
 
@@ -135,7 +128,6 @@ class CustomVecEnv(VecEnv):
         for q_in, _ in self.queues:
             q_in.put(('set_attr', attr_name, value, index))
 
-        # Collect results
         results = [q_out.get() for _, q_out in self.queues]
         return results
 
