@@ -10,6 +10,8 @@ from queue import Empty
 
 import ale_py
 
+from envs.MultiActionSpace import ActionSpaces
+
 def worker(idx, q_in, q_out, env):
     """Worker process that creates the environment and handles requests."""
     print(f"Worker {idx} process started.")  # Confirm worker is starting
@@ -36,6 +38,7 @@ class CustomVecEnv(VecEnv):
     def __init__(self, num_envs):
         self.num_envs = num_envs
         self.envs = [None] * num_envs  # Initialize list of environments
+        self.action_spaces = [None] * num_envs
         self.processes = []
         self.queues = []
         self.closed = False
@@ -48,6 +51,7 @@ class CustomVecEnv(VecEnv):
         for i in range(self.num_envs):
             env = gym.make("ALE/Frogger-v5", render_mode="rgb_array",)
             env = AtariPreprocessing(env, frame_skip=1, grayscale_newaxis=True)
+            self.action_spaces[i] = env.action_space
 
             q_in = multiprocessing.Queue()
             q_out = multiprocessing.Queue()
@@ -58,6 +62,8 @@ class CustomVecEnv(VecEnv):
             p.start()
             self.processes.append(p)
             self.envs[i] = env
+
+        self.action_spaces = ActionSpaces(self.action_spaces)
 
     def reset(self):
         """Reset all environments and return observations."""
@@ -76,12 +82,12 @@ class CustomVecEnv(VecEnv):
                 print("Timeout waiting for reset response.")
                 observations.append(None)
         return np.array(observations)
-
-    def step(self, action):
+    
+    def step(self, actions):
         """Send actions to the subprocesses and collect the results."""
         for i, (q_in, _) in enumerate(self.queues):
-            q_in.put(('step', action))
-            print(f"action {action} performed on index {i}")
+            q_in.put(('step', actions[i]))
+            print(f"action {actions[i]} performed on index {i}")
 
         # Collect the results from all environments
         results = []
@@ -148,7 +154,7 @@ class CustomVecEnv(VecEnv):
     def action_space(self):
         """Return the action space of the environment."""
         if self.envs[0] is not None:
-            return self.envs[0].action_space  # Access action_space of first env
+            return self.envs[0].action_space
         else:
             raise AttributeError("Environment not initialized properly.")
 
@@ -156,7 +162,7 @@ class CustomVecEnv(VecEnv):
     def observation_space(self):
         """Return the observation space of the environment."""
         if self.envs[0] is not None:
-            return self.envs[0].observation_space  # Access observation_space of first env
+            return self.envs[0].observation_space
         else:
             raise AttributeError("Environment not initialized properly.")
     
