@@ -102,7 +102,6 @@ class CustomVecEnv(VecEnv):
         """Send actions to the subprocesses and collect the results."""
         for i, (q_in, _) in enumerate(self.queues):
             q_in.put(('step', actions[i]))
-            print(f"action {actions[i]} performed on index {i}")
 
         results = []
         for _, q_out in self.queues:
