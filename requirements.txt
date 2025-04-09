@@ -14,6 +14,9 @@ stable-baselines3
 pygame
 ale_py
 
+keras
+tensorflow
+
 scikit-learn
 
 opencv-python
