@@ -55,7 +55,9 @@ class DQNAgent:
         self.target_model.set_weights(self.model.get_weights())
 
         self.step_count = 0
+        self.episode = 0
         self.all_rewards = []
+
 
         if self.resume:
             self._load_memory()
