@@ -13,7 +13,7 @@ class BuildFroggerConfig:
 class PreprocessingFroggerConfig:
     noop_max : int = 30
     frame_skip : int = 1
-    screen_size: int | Tuple[int, int] = (84, 84)
+    screen_size: Tuple[int, int] = (84, 84)
     terminal_on_life_loss : bool = False
     grayscale_obs : bool = True
     grayscale_newaxis : bool = True

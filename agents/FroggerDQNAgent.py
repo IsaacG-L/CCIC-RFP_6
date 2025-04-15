@@ -165,6 +165,8 @@ class DQNAgent:
             Conv2D(32, kernel_size=8, strides=4, activation='relu', input_shape=input_shape),
             Conv2D(64, kernel_size=4, strides=2, activation='relu'),
             Conv2D(64, kernel_size=3, strides=1, activation='relu'),
+            Conv2D(64, kernel_size=2, strides=1, activation='relu'),
+            Conv2D(64, kernel_size=1, strides=1, activation='relu'),
             Flatten(),
             Dense(512, activation='relu'),
             Dense(num_actions, activation='linear')
